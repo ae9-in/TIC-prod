@@ -16,6 +16,12 @@ async function connectDatabase() {
   if (cached.conn) return cached.conn;
 
   if (!cached.promise) {
+    try {
+      const url = new URL(MONGODB_URI);
+      console.log("Connecting to MongoDB host:", url.host);
+    } catch (e) {
+      console.log("Invalid MONGODB_URI format");
+    }
     cached.promise = mongoose.connect(MONGODB_URI).then((mongooseInstance) => mongooseInstance);
   }
 
