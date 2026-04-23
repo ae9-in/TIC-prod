@@ -1,0 +1,14 @@
+{
+  "name": "talent-scout-monorepo",
+  "private": true,
+  "scripts": {
+    "dev:backend": "npm --prefix backend run dev",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "build:frontend": "npm --prefix frontend run build",
+    "install:all": "npm install --prefix backend && npm install --prefix frontend",
+    "test:frontend": "npm --prefix frontend test"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2"
+  }
+}
