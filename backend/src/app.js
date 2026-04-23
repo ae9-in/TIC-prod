@@ -60,7 +60,11 @@ app.use((err, _req, res, _next) => {
   if (err?.message === "Not allowed by CORS") {
     return res.status(403).json({ message: "CORS blocked request origin" });
   }
-  return res.status(500).json({ message: "Internal server error" });
+  return res.status(500).json({
+    message: "Internal server error",
+    error: err?.message,
+    stack: process.env.NODE_ENV === "production" ? undefined : err?.stack
+  });
 });
 
 module.exports = app;
