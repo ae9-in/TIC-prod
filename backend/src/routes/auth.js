@@ -125,6 +125,31 @@ router.post("/reset-password", async (req, res) => {
   }
 });
 
+router.post("/change-password", authRequired, async (req, res) => {
+  try {
+    const currentPassword = String(req.body.currentPassword || "");
+    const newPassword = String(req.body.newPassword || "");
+    if (!currentPassword || !newPassword || newPassword.length < 6) {
+      return res.status(400).json({ message: "Current password and new password (min 6 chars) are required" });
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(401).json({ message: "Unauthorized" });
+
+    const valid = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!valid) return res.status(400).json({ message: "Current password is incorrect" });
+
+    user.passwordHash = await bcrypt.hash(newPassword, 10);
+    user.resetPasswordTokenHash = null;
+    user.resetPasswordExpiresAt = null;
+    await user.save();
+
+    return res.json({ message: "Password updated successfully" });
+  } catch (error) {
+    return res.status(500).json({ message: error.message || "Could not change password" });
+  }
+});
+
 router.get("/me", authRequired, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).lean();

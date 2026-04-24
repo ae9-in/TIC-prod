@@ -75,8 +75,20 @@ router.get("/applications/me", authRequired, async (req, res) => {
   return res.json({ applications: enriched });
 });
 
-router.get("/applications", authRequired, adminRequired, async (_req, res) => {
-  const applications = await Application.find({}).sort({ appliedAt: -1 }).lean();
+router.get("/applications", authRequired, adminRequired, async (req, res) => {
+  const filterJobId = String(req.query.jobId || "");
+  const adminJobs = await Job.find({ createdBy: req.user.id }).select("_id").lean();
+  const adminJobIds = adminJobs.map((j) => j._id.toString());
+
+  if (adminJobIds.length === 0) {
+    return res.json({ applications: [] });
+  }
+
+  const query = filterJobId
+    ? { jobId: { $in: adminJobIds.filter((id) => id === filterJobId) } }
+    : { jobId: { $in: adminJobIds } };
+
+  const applications = await Application.find(query).sort({ appliedAt: -1 }).lean();
   const jobIds = applications.map((a) => a.jobId);
   const userIds = applications.map((a) => a.userId);
 
@@ -121,12 +133,15 @@ router.patch("/applications/:applicationId/status", authRequired, adminRequired,
     return res.status(400).json({ message: "Invalid status" });
   }
 
-  const app = await Application.findByIdAndUpdate(
-    req.params.applicationId,
-    { applicationStatus: next },
-    { new: true },
-  ).lean();
+  const existing = await Application.findById(req.params.applicationId).lean();
+  if (!existing) return res.status(404).json({ message: "Application not found" });
 
+  const job = await Job.findById(existing.jobId).lean();
+  if (!job || String(job.createdBy) !== req.user.id) {
+    return res.status(403).json({ message: "You can only update applications for your jobs" });
+  }
+
+  const app = await Application.findByIdAndUpdate(req.params.applicationId, { applicationStatus: next }, { new: true }).lean();
   if (!app) return res.status(404).json({ message: "Application not found" });
   return res.json({ application: toApplication(app) });
 });

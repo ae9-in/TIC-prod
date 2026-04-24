@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { api, toAbsoluteFileUrl } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
@@ -19,6 +19,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import PageBackButton from "@/components/PageBackButton";
 import { toast } from "sonner";
 import {
   FileText,
@@ -74,7 +75,7 @@ interface JobApplication {
   } | null;
 }
 
-type Tab = "jobs" | "applications" | "candidates";
+type Tab = "jobs" | "applications" | "candidates" | "details";
 
 const initialJobForm = {
   title: "",
@@ -93,9 +94,17 @@ const initialJobForm = {
 const Admin = () => {
   const { user, isAdmin, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const defaultTabParam = searchParams.get("tab");
+  const initialTab: Tab =
+    defaultTabParam === "applications" || defaultTabParam === "candidates" || defaultTabParam === "jobs" || defaultTabParam === "details"
+      ? defaultTabParam
+      : "jobs";
+  const initialJobId = searchParams.get("jobId") || "";
 
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<Tab>("jobs");
+  const [activeTab, setActiveTab] = useState<Tab>(initialTab);
+  const [selectedJobId, setSelectedJobId] = useState(initialJobId);
 
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [jobs, setJobs] = useState<JobRecord[]>([]);
@@ -107,6 +116,7 @@ const Admin = () => {
   const [editingJobId, setEditingJobId] = useState<string | null>(null);
   const [savingJob, setSavingJob] = useState(false);
   const [jobForm, setJobForm] = useState(initialJobForm);
+  const [adminName, setAdminName] = useState("Platform Admin");
 
   useEffect(() => {
     if (!authLoading) {
@@ -118,20 +128,26 @@ const Admin = () => {
         void loadDashboard();
       }
     }
-  }, [user, isAdmin, authLoading, navigate]);
+  }, [user, isAdmin, authLoading, navigate, selectedJobId]);
 
   const loadDashboard = async () => {
     setLoading(true);
     try {
       const [profilesData, jobsData, appsData] = await Promise.all([
         api.get("/api/profiles"),
-        api.get("/api/jobs"),
-        api.get("/api/applications"),
+        api.get("/api/jobs?mine=true"),
+        api.get(selectedJobId ? `/api/applications?jobId=${encodeURIComponent(selectedJobId)}` : "/api/applications"),
       ]);
 
       setCandidates((profilesData.profiles || []) as Candidate[]);
-      setJobs((jobsData.jobs || []) as JobRecord[]);
+      setJobs(
+        ((jobsData.jobs || []) as JobRecord[]).sort(
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        ),
+      );
       setApplications((appsData.applications || []) as JobApplication[]);
+      const adminProfile = await api.get("/api/profiles/me");
+      setAdminName((adminProfile.profile?.fullName as string) || "Platform Admin");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to load admin dashboard");
     } finally {
@@ -217,7 +233,7 @@ const Admin = () => {
       deadline: job.deadline ? new Date(job.deadline).toISOString().slice(0, 16) : "",
       status: job.status,
     });
-    setActiveTab("jobs");
+    selectTab("jobs");
   };
 
   const updateJobStatus = async (jobId: string, status: "published" | "closed" | "draft") => {
@@ -277,6 +293,14 @@ const Admin = () => {
     );
   }, [applications, applicationSearch]);
 
+  const selectTab = (next: Tab, jobId = "") => {
+    setActiveTab(next);
+    setSelectedJobId(jobId);
+    const params: Record<string, string> = { tab: next };
+    if (jobId) params.jobId = jobId;
+    setSearchParams(params);
+  };
+
   if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -291,6 +315,7 @@ const Admin = () => {
       <main className="flex-1 pt-24 pb-20">
         <div className="container mx-auto px-4 max-w-7xl">
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
+            <PageBackButton label="Back" fallbackTo="/" className="-ml-3 mb-3" />
             <h1 className="text-3xl font-display font-bold text-foreground mb-2 flex items-center gap-3">
               <BriefcaseBusiness className="w-8 h-8 text-primary" /> Admin Dashboard
             </h1>
@@ -298,14 +323,17 @@ const Admin = () => {
           </motion.div>
 
           <div className="flex flex-wrap gap-2 mb-6">
-            <Button variant={activeTab === "jobs" ? "default" : "outline"} onClick={() => setActiveTab("jobs")} className="rounded-xl">
+            <Button variant={activeTab === "jobs" ? "default" : "outline"} onClick={() => selectTab("jobs")} className="rounded-xl">
               Jobs ({jobs.length})
             </Button>
-            <Button variant={activeTab === "applications" ? "default" : "outline"} onClick={() => setActiveTab("applications")} className="rounded-xl">
+            <Button variant={activeTab === "applications" ? "default" : "outline"} onClick={() => selectTab("applications", selectedJobId)} className="rounded-xl">
               Applications ({applications.length})
             </Button>
-            <Button variant={activeTab === "candidates" ? "default" : "outline"} onClick={() => setActiveTab("candidates")} className="rounded-xl">
+            <Button variant={activeTab === "candidates" ? "default" : "outline"} onClick={() => selectTab("candidates")} className="rounded-xl">
               Candidates ({candidates.length})
+            </Button>
+            <Button variant={activeTab === "details" ? "default" : "outline"} onClick={() => selectTab("details")} className="rounded-xl">
+              Admin Details
             </Button>
           </div>
 
@@ -368,6 +396,7 @@ const Admin = () => {
                             <TableCell className="text-right">
                               <div className="inline-flex gap-2">
                                 <Button variant="outline" size="sm" onClick={() => startEditJob(job)}>Edit</Button>
+                                <Button variant="outline" size="sm" onClick={() => selectTab("applications", job.id)}>Applicants</Button>
                                 {job.status !== "published" && <Button size="sm" onClick={() => updateJobStatus(job.id, "published")}>Publish</Button>}
                                 {job.status !== "closed" && <Button variant="outline" size="sm" onClick={() => updateJobStatus(job.id, "closed")}>Close</Button>}
                               </div>
@@ -387,6 +416,14 @@ const Admin = () => {
             <Card className="rounded-2xl border-border shadow-card overflow-hidden">
               <CardHeader className="bg-muted/30 border-b border-border space-y-3">
                 <CardTitle className="font-display">Applications</CardTitle>
+                {selectedJobId && (
+                  <p className="text-sm text-muted-foreground">
+                    Showing applicants for selected job.{" "}
+                    <button className="text-primary hover:underline" onClick={() => selectTab("applications")}>
+                      Clear filter
+                    </button>
+                  </p>
+                )}
                 <div className="relative w-full md:w-96"><Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" /><Input value={applicationSearch} onChange={(e) => setApplicationSearch(e.target.value)} placeholder="Search by candidate, email, job, company" className="pl-10" /></div>
               </CardHeader>
               <CardContent className="p-0">
@@ -407,7 +444,13 @@ const Admin = () => {
                           <TableCell className="text-right">
                             <div className="inline-flex gap-2">
                               <Button size="icon" variant="ghost" onClick={() => openResume(app.resumeUrl)} title="View Resume"><FileText className="w-4 h-4 text-primary" /></Button>
-                              {app.candidate?.profileId && <Button size="icon" variant="ghost" asChild title="View Profile"><Link to={`/profile/${app.candidate.profileId}`}><ExternalLink className="w-4 h-4" /></Link></Button>}
+                              {app.candidate?.profileId && (
+                                <Button size="icon" variant="ghost" asChild title="View Profile">
+                                  <Link to={`/profile/${app.candidate.profileId}?from=admin&tab=applications&jobId=${app.job?.id || ""}`}>
+                                    <ExternalLink className="w-4 h-4" />
+                                  </Link>
+                                </Button>
+                              )}
                             </div>
                           </TableCell>
                         </TableRow>
@@ -440,7 +483,7 @@ const Admin = () => {
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-2">
                               <Button size="icon" variant="ghost" className="h-8 w-8 rounded-lg" title="View Resume" onClick={() => openResume(candidate.resumeUrl)}><FileText className="w-4 h-4 text-primary" /></Button>
-                              <Button size="icon" variant="ghost" className="h-8 w-8 rounded-lg" asChild title="View Full Profile"><Link to={`/profile/${candidate.id}`}><ExternalLink className="w-4 h-4" /></Link></Button>
+                              <Button size="icon" variant="ghost" className="h-8 w-8 rounded-lg" asChild title="View Full Profile"><Link to={`/profile/${candidate.id}?from=admin&tab=candidates`}><ExternalLink className="w-4 h-4" /></Link></Button>
                             </div>
                           </TableCell>
                         </TableRow>
@@ -448,6 +491,25 @@ const Admin = () => {
                       {filteredCandidates.length === 0 && <TableRow><TableCell colSpan={5} className="h-40 text-center text-muted-foreground italic">No candidates match your search.</TableCell></TableRow>}
                     </TableBody>
                   </Table>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {activeTab === "details" && (
+            <Card className="rounded-2xl border-border shadow-card">
+              <CardHeader>
+                <CardTitle className="font-display">Admin Details</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <p className="text-sm text-muted-foreground">Name</p>
+                <p className="font-semibold text-foreground">{adminName}</p>
+                <p className="text-sm text-muted-foreground pt-2">Email</p>
+                <p className="font-semibold text-foreground">{user?.email}</p>
+                <div className="pt-4">
+                  <Button asChild>
+                    <Link to="/profile">Manage Password</Link>
+                  </Button>
                 </div>
               </CardContent>
             </Card>

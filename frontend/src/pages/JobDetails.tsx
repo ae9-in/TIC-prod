@@ -1,17 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { api } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import PageBackButton from "@/components/PageBackButton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Loader2, CalendarDays, MapPin, Building2, ArrowLeft } from "lucide-react";
+import { Loader2, CalendarDays, MapPin, Building2 } from "lucide-react";
 
 interface JobData {
   id: string;
@@ -150,11 +151,7 @@ const JobDetails = () => {
       <Navbar />
       <main className="flex-1 pt-24 pb-20">
         <div className="container mx-auto px-4 max-w-4xl">
-          <Link to="/jobs">
-            <Button variant="ghost" className="mb-5 gap-2">
-              <ArrowLeft className="w-4 h-4" /> Back to Jobs
-            </Button>
-          </Link>
+          <PageBackButton label="Back to Jobs" fallbackTo="/jobs" className="mb-5 -ml-3" />
 
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
             <Card className="rounded-2xl border-border shadow-card mb-6">

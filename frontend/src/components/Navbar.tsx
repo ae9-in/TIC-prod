@@ -37,9 +37,11 @@ const Navbar = () => {
                 </Link>
               )}
 
-              <Link to="/profile">
-                <Button variant="outline" size="sm">My Profile</Button>
-              </Link>
+              {!isAdmin && (
+                <Link to="/profile">
+                  <Button variant="outline" size="sm">My Profile</Button>
+                </Link>
+              )}
 
               <Button variant="ghost" size="sm" onClick={signOut} className="gap-1.5">
                 <LogOut className="w-4 h-4" /> Sign Out

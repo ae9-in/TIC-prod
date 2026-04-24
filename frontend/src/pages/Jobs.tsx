@@ -5,6 +5,7 @@ import { api } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import PageBackButton from "@/components/PageBackButton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -28,7 +29,7 @@ interface MyApp {
 }
 
 const Jobs = () => {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [jobs, setJobs] = useState<JobItem[]>([]);
@@ -82,6 +83,7 @@ const Jobs = () => {
       <main className="flex-1 pt-24 pb-20">
         <div className="container mx-auto px-4 max-w-6xl">
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
+            <PageBackButton label="Back" fallbackTo={isAdmin ? "/admin" : "/profile"} className="mb-3 -ml-3" />
             <h1 className="font-display text-3xl lg:text-4xl font-bold text-foreground mb-2">Open Roles</h1>
             <p className="text-muted-foreground">Explore current opportunities and apply in a few clicks.</p>
           </motion.div>

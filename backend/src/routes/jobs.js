@@ -23,7 +23,13 @@ const toJob = (job) => ({
 });
 
 router.get("", authRequired, async (req, res) => {
-  const query = req.user.role === "admin" ? {} : { status: "published", $or: [{ deadline: null }, { deadline: { $gte: new Date() } }] };
+  let query;
+  if (req.user.role === "admin") {
+    const mine = String(req.query.mine || "true") !== "false";
+    query = mine ? { createdBy: req.user.id } : {};
+  } else {
+    query = { status: "published", $or: [{ deadline: null }, { deadline: { $gte: new Date() } }] };
+  }
   const jobs = await Job.find(query).sort({ createdAt: -1 }).lean();
   return res.json({ jobs: jobs.map(toJob) });
 });
@@ -67,6 +73,12 @@ router.post("", authRequired, adminRequired, async (req, res) => {
 });
 
 router.put("/:jobId", authRequired, adminRequired, async (req, res) => {
+  const existing = await Job.findById(req.params.jobId).lean();
+  if (!existing) return res.status(404).json({ message: "Job not found" });
+  if (String(existing.createdBy) !== req.user.id) {
+    return res.status(403).json({ message: "You can only update jobs created by your account" });
+  }
+
   const payload = {
     title: req.body.title,
     company: req.body.company,
@@ -82,8 +94,18 @@ router.put("/:jobId", authRequired, adminRequired, async (req, res) => {
   };
 
   const job = await Job.findByIdAndUpdate(req.params.jobId, payload, { new: true }).lean();
-  if (!job) return res.status(404).json({ message: "Job not found" });
   return res.json({ job: toJob(job) });
+});
+
+router.delete("/:jobId", authRequired, adminRequired, async (req, res) => {
+  const existing = await Job.findById(req.params.jobId).lean();
+  if (!existing) return res.status(404).json({ message: "Job not found" });
+  if (String(existing.createdBy) !== req.user.id) {
+    return res.status(403).json({ message: "You can only delete jobs created by your account" });
+  }
+
+  await Job.findByIdAndDelete(req.params.jobId);
+  return res.json({ ok: true });
 });
 
 module.exports = router;

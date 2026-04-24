@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, Link, useParams } from "react-router-dom";
+import { useNavigate, Link, useParams, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +8,10 @@ import { api, toAbsoluteFileUrl } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import PageBackButton from "@/components/PageBackButton";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 import {
   User,
   GraduationCap,
@@ -20,6 +24,7 @@ import {
   Edit,
   Loader2,
   Calendar,
+  ShieldCheck,
 } from "lucide-react";
 
 interface Education {
@@ -50,17 +55,24 @@ interface ProfileData {
   resumeUrl?: string;
   educations: Education[];
   experiences: Experience[];
+  role?: "candidate" | "admin";
 }
 
 const Profile = () => {
   const { user, loading: authLoading, isAdmin } = useAuth();
   const { profileId } = useParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [changingPassword, setChangingPassword] = useState(false);
 
   const viewingCandidateProfile = Boolean(profileId && isAdmin);
+  const viewingAdminSelf = Boolean(isAdmin && !profileId);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -89,10 +101,55 @@ const Profile = () => {
 
       setProfile(data.profile);
     } catch (error) {
-      console.error("Error loading profile:", error);
-      setProfile(null);
+      if (viewingAdminSelf) {
+        setProfile({
+          id: "admin-self",
+          userId: user.id,
+          fullName: "Platform Admin",
+          email: user.email,
+          phone: "",
+          bio: "",
+          avatarUrl: "",
+          skills: [],
+          certificates: [],
+          educations: [],
+          experiences: [],
+          role: "admin",
+        });
+      } else {
+        console.error("Error loading profile:", error);
+        setProfile(null);
+      }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (!currentPassword || !newPassword) {
+      toast.error("Current and new password are required");
+      return;
+    }
+    if (newPassword.length < 6) {
+      toast.error("New password must be at least 6 characters");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error("New password and confirmation do not match");
+      return;
+    }
+
+    setChangingPassword(true);
+    try {
+      const data = await api.post("/api/auth/change-password", { currentPassword, newPassword });
+      toast.success((data.message as string) || "Password updated");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not change password");
+    } finally {
+      setChangingPassword(false);
     }
   };
 
@@ -108,22 +165,90 @@ const Profile = () => {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
         <h2 className="text-2xl font-bold mb-4">No profile found</h2>
-        <p className="text-muted-foreground mb-6">You haven't created your profile yet.</p>
-        <Link to="/register">
-          <Button>Create Profile Now</Button>
-        </Link>
+        <p className="text-muted-foreground mb-6">
+          {viewingCandidateProfile ? "Candidate profile is unavailable." : "You haven't created your profile yet."}
+        </p>
+        {viewingCandidateProfile ? (
+          <PageBackButton label="Back to Admin" fallbackTo="/admin" />
+        ) : (
+          <Link to="/register">
+            <Button>Create Profile Now</Button>
+          </Link>
+        )}
       </div>
     );
   }
 
   const avatarSrc = profile.avatarUrl ? toAbsoluteFileUrl(profile.avatarUrl) : "";
   const resumeHref = profile.resumeUrl ? toAbsoluteFileUrl(profile.resumeUrl) : "";
+  const adminBackTab = searchParams.get("tab") || "applications";
+  const adminBackJobId = searchParams.get("jobId");
+  const adminBackTo = adminBackJobId
+    ? `/admin?tab=${encodeURIComponent(adminBackTab)}&jobId=${encodeURIComponent(adminBackJobId)}`
+    : `/admin?tab=${encodeURIComponent(adminBackTab)}`;
+
+  if (viewingAdminSelf) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="pt-24 pb-20">
+          <div className="container mx-auto px-4 max-w-3xl space-y-5">
+            <PageBackButton label="Back to Admin" fallbackTo="/admin" className="-ml-3" />
+            <Card className="rounded-2xl border-border shadow-card">
+              <CardHeader>
+                <CardTitle className="text-xl font-display flex items-center gap-2">
+                  <ShieldCheck className="w-5 h-5 text-primary" /> Admin Details
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Name</Label>
+                  <Input value={profile.fullName || "Platform Admin"} readOnly />
+                </div>
+                <div className="space-y-2">
+                  <Label>Email</Label>
+                  <Input value={profile.email || user?.email || ""} readOnly />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="rounded-2xl border-border shadow-card">
+              <CardHeader>
+                <CardTitle className="text-xl font-display">Change Password</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Current Password</Label>
+                  <Input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label>New Password</Label>
+                  <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Confirm New Password</Label>
+                  <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+                </div>
+                <Button onClick={handleChangePassword} disabled={changingPassword}>
+                  {changingPassword ? "Updating..." : "Update Password"}
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
       <div className="pt-24 pb-20">
         <div className="container mx-auto px-4 max-w-5xl">
+          {viewingCandidateProfile && (
+            <PageBackButton label="Back to Admin" fallbackTo={adminBackTo} className="mb-3 -ml-3" />
+          )}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

@@ -11,6 +11,7 @@ import { api, toAbsoluteFileUrl } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import PageBackButton from "@/components/PageBackButton";
 import {
   User,
   GraduationCap,
@@ -276,6 +277,7 @@ const Register = () => {
       <div className="pt-24 pb-16">
         <div className="container mx-auto px-4 max-w-3xl">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+            <PageBackButton label="Back" fallbackTo="/profile" className="mb-3 -ml-3" />
             <h1 className="font-display text-3xl lg:text-4xl font-bold text-foreground mb-2">Create Your Profile</h1>
             <p className="text-muted-foreground mb-8">Fill in your details so companies can find you</p>
           </motion.div>
