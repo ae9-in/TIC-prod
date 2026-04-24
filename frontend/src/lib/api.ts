@@ -2,7 +2,8 @@ const rawApiBaseUrl =
   import.meta.env.VITE_API_BASE_URL?.trim() ||
   (import.meta.env.DEV ? "http://localhost:5000" : "https://ticprodbackendddd.vercel.app");
 
-const API_BASE_URL = rawApiBaseUrl.replace(/\/+$/, "");
+// Normalize so both "...vercel.app" and "...vercel.app/api" env values work.
+const API_BASE_URL = rawApiBaseUrl.replace(/\/+$/, "").replace(/\/api$/, "");
 
 const getToken = () => localStorage.getItem("auth_token");
 
