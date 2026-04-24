@@ -1,6 +1,6 @@
 const rawApiBaseUrl =
   import.meta.env.VITE_API_BASE_URL?.trim() ||
-  (import.meta.env.DEV ? "http://localhost:5000" : "");
+  (import.meta.env.DEV ? "http://localhost:5000" : "https://ticprodbackendddd.vercel.app");
 
 const API_BASE_URL = rawApiBaseUrl.replace(/\/+$/, "");
 
@@ -18,15 +18,33 @@ const request = async (path: string, options: RequestInit = {}) => {
     headers.set("Authorization", `Bearer ${token}`);
   }
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...options,
-    headers,
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}${path}`, {
+      ...options,
+      headers,
+    });
+  } catch {
+    throw new Error("Network error: could not reach server");
+  }
 
-  const data = await response.json().catch(() => ({}));
+  const text = await response.text();
+  let data: Record<string, unknown> = {};
+  if (text) {
+    try {
+      data = JSON.parse(text) as Record<string, unknown>;
+    } catch {
+      if (!response.ok) {
+        throw new Error(`Request failed (${response.status})`);
+      }
+    }
+  }
 
   if (!response.ok) {
-    throw new Error(data?.message || "Request failed");
+    const message =
+      (typeof data?.message === "string" && data.message) ||
+      `Request failed (${response.status})`;
+    throw new Error(message);
   }
 
   return data;
