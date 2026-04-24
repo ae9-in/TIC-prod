@@ -51,8 +51,14 @@ router.post("/jobs/:jobId/apply", authRequired, async (req, res) => {
 
 router.get("/applications/me", authRequired, async (req, res) => {
   const applications = await Application.find({ userId: req.user.id }).sort({ appliedAt: -1 }).lean();
-  const jobIds = applications.map((a) => a.jobId);
-  const jobs = await Job.find({ _id: { $in: jobIds } }).lean();
+  if (applications.length === 0) {
+    return res.json({ applications: [] });
+  }
+
+  const jobIds = [...new Set(applications.map((a) => String(a.jobId)))];
+  const jobs = await Job.find({ _id: { $in: jobIds } })
+    .select("_id title company location deadline status")
+    .lean();
   const jobMap = new Map(jobs.map((j) => [j._id.toString(), j]));
 
   const enriched = applications.map((app) => {
@@ -88,13 +94,21 @@ router.get("/applications", authRequired, adminRequired, async (req, res) => {
     ? { jobId: { $in: adminJobIds.filter((id) => id === filterJobId) } }
     : { jobId: { $in: adminJobIds } };
 
+  if (filterJobId && query.jobId.$in.length === 0) {
+    return res.json({ applications: [] });
+  }
+
   const applications = await Application.find(query).sort({ appliedAt: -1 }).lean();
-  const jobIds = applications.map((a) => a.jobId);
-  const userIds = applications.map((a) => a.userId);
+  if (applications.length === 0) {
+    return res.json({ applications: [] });
+  }
+
+  const jobIds = [...new Set(applications.map((a) => String(a.jobId)))];
+  const userIds = [...new Set(applications.map((a) => String(a.userId)))];
 
   const [jobs, profiles] = await Promise.all([
-    Job.find({ _id: { $in: jobIds } }).lean(),
-    Profile.find({ userId: { $in: userIds } }).lean(),
+    Job.find({ _id: { $in: jobIds } }).select("_id title company").lean(),
+    Profile.find({ userId: { $in: userIds } }).select("_id userId fullName email").lean(),
   ]);
 
   const jobMap = new Map(jobs.map((j) => [j._id.toString(), j]));

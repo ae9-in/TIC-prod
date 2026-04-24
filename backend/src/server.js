@@ -27,7 +27,15 @@ app.use(cors({ origin: CLIENT_ORIGIN, credentials: true }));
 app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ extended: true }));
 
-app.use("/uploads", express.static(path.join(process.cwd(), "backend", "uploads")));
+app.set("etag", "strong");
+app.use(
+  "/uploads",
+  express.static(path.join(process.cwd(), "backend", "uploads"), {
+    etag: true,
+    maxAge: "1d",
+    fallthrough: false,
+  }),
+);
 
 app.get("/api/health", (_req, res) => {
   res.json({ ok: true });

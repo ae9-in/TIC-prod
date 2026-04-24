@@ -11,4 +11,9 @@ const userSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
+userSchema.index(
+  { resetPasswordTokenHash: 1, resetPasswordExpiresAt: 1 },
+  { partialFilterExpression: { resetPasswordTokenHash: { $exists: true, $ne: null } } },
+);
+
 module.exports = mongoose.model("User", userSchema);

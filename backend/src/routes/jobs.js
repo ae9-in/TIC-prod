@@ -30,7 +30,10 @@ router.get("", authRequired, async (req, res) => {
   } else {
     query = { status: "published", $or: [{ deadline: null }, { deadline: { $gte: new Date() } }] };
   }
-  const jobs = await Job.find(query).sort({ createdAt: -1 }).lean();
+  const jobs = await Job.find(query)
+    .select("_id createdBy title company location employmentType description requirements skills stipendMin stipendMax deadline status createdAt updatedAt")
+    .sort({ createdAt: -1 })
+    .lean();
   return res.json({ jobs: jobs.map(toJob) });
 });
 

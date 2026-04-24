@@ -13,6 +13,7 @@ const uploadRoutes = require("./routes/uploads");
 const fileRoutes = require("./routes/files");
 
 const app = express();
+let dbReadyPromise = null;
 
 const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || "http://localhost:8080";
 const allowedOrigins = CLIENT_ORIGIN.split(",").map((v) => v.trim()).filter(Boolean);
@@ -31,9 +32,16 @@ app.use(
 app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ extended: true }));
 
+const ensureDatabase = async () => {
+  if (!dbReadyPromise) {
+    dbReadyPromise = connectDatabase();
+  }
+  return dbReadyPromise;
+};
+
 app.use(async (_req, _res, next) => {
   try {
-    await connectDatabase();
+    await ensureDatabase();
     next();
   } catch (error) {
     next(error);

@@ -23,7 +23,9 @@ const toProfileResponse = (profile) => ({
 });
 
 router.get("/me", authRequired, async (req, res) => {
-  const profile = await Profile.findOne({ userId: req.user.id }).lean();
+  const profile = await Profile.findOne({ userId: req.user.id })
+    .select("userId fullName email phone bio avatarUrl resumeUrl role skills certificates educations experiences createdAt updatedAt")
+    .lean();
   if (!profile) return res.status(404).json({ message: "Profile not found" });
   return res.json({ profile: toProfileResponse(profile) });
 });
@@ -51,12 +53,17 @@ router.put("/me", authRequired, async (req, res) => {
 });
 
 router.get("", authRequired, adminRequired, async (_req, res) => {
-  const profiles = await Profile.find({ role: { $ne: "admin" } }).sort({ createdAt: -1 }).lean();
+  const profiles = await Profile.find({ role: { $ne: "admin" } })
+    .select("userId fullName email phone bio avatarUrl resumeUrl role skills certificates educations experiences createdAt updatedAt")
+    .sort({ createdAt: -1 })
+    .lean();
   return res.json({ profiles: profiles.map(toProfileResponse) });
 });
 
 router.get("/:profileId", authRequired, adminRequired, async (req, res) => {
-  const profile = await Profile.findById(req.params.profileId).lean();
+  const profile = await Profile.findById(req.params.profileId)
+    .select("userId fullName email phone bio avatarUrl resumeUrl role skills certificates educations experiences createdAt updatedAt")
+    .lean();
   if (!profile) return res.status(404).json({ message: "Profile not found" });
   return res.json({ profile: toProfileResponse(profile) });
 });
