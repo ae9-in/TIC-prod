@@ -14,12 +14,12 @@ const HeroSection = () => {
           alt="Diverse interns collaborating"
           className="w-full h-full object-cover object-center origin-center"
           animate={{
-            scale: [1.05, 1.15, 1.05],
-            x: [-10, 10, -10],
-            y: [-8, 8, -8],
+            scale: [1.05, 1.18, 1.05],
+            x: [-12, 12, -12],
+            y: [-10, 10, -10],
           }}
           transition={{
-            duration: 25,
+            duration: 12,
             repeat: Infinity,
             ease: "easeInOut",
           }}
