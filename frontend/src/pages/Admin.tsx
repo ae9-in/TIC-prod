@@ -91,6 +91,13 @@ const initialJobForm = {
   status: "draft",
 };
 
+const PIPELINE_COLUMNS = [
+  { id: "submitted", label: "Submitted", dotColor: "bg-primary" },
+  { id: "shortlisted", label: "Shortlisted", dotColor: "bg-accent" },
+  { id: "accepted", label: "Accepted", dotColor: "bg-emerald-500" },
+  { id: "rejected", label: "Rejected", dotColor: "bg-red-500" },
+];
+
 const Admin = () => {
   const { user, isAdmin, loading: authLoading } = useAuth();
   const navigate = useNavigate();
@@ -105,6 +112,7 @@ const Admin = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<Tab>(initialTab);
   const [selectedJobId, setSelectedJobId] = useState(initialJobId);
+  const [appViewMode, setAppViewMode] = useState<"table" | "kanban">("kanban");
 
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [jobs, setJobs] = useState<JobRecord[]>([]);
@@ -413,52 +421,172 @@ const Admin = () => {
           )}
 
           {activeTab === "applications" && (
-            <Card className="rounded-2xl border-border shadow-card overflow-hidden">
-              <CardHeader className="bg-muted/30 border-b border-border space-y-3">
-                <CardTitle className="font-display">Applications</CardTitle>
-                {selectedJobId && (
-                  <p className="text-sm text-muted-foreground">
-                    Showing applicants for selected job.{" "}
-                    <button className="text-primary hover:underline" onClick={() => selectTab("applications")}>
-                      Clear filter
-                    </button>
-                  </p>
-                )}
-                <div className="relative w-full md:w-96"><Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" /><Input value={applicationSearch} onChange={(e) => setApplicationSearch(e.target.value)} placeholder="Search by candidate, email, job, company" className="pl-10" /></div>
+            <Card className="rounded-2xl border-border shadow-card overflow-hidden bg-card/30 backdrop-blur-md">
+              <CardHeader className="bg-muted/30 border-b border-border space-y-4">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div className="text-left">
+                    <CardTitle className="font-display">Applications</CardTitle>
+                    {selectedJobId && (
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Showing applicants for selected job.{" "}
+                        <button className="text-primary hover:underline font-semibold" onClick={() => selectTab("applications")}>
+                          Clear filter
+                        </button>
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl p-1 shrink-0 self-start md:self-auto">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setAppViewMode("table")}
+                      className={`rounded-lg px-3 py-1.5 h-8 text-xs font-semibold ${appViewMode === "table" ? "bg-primary text-white" : "text-muted-foreground"}`}
+                    >
+                      Table View
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setAppViewMode("kanban")}
+                      className={`rounded-lg px-3 py-1.5 h-8 text-xs font-semibold ${appViewMode === "kanban" ? "bg-primary text-white" : "text-muted-foreground"}`}
+                    >
+                      Pipeline View (Kanban)
+                    </Button>
+                  </div>
+                </div>
+                <div className="relative w-full md:w-96">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input value={applicationSearch} onChange={(e) => setApplicationSearch(e.target.value)} placeholder="Search by candidate, email, job, company" className="pl-10" />
+                </div>
               </CardHeader>
               <CardContent className="p-0">
-                <div className="relative overflow-x-auto">
-                  <Table>
-                    <TableHeader><TableRow><TableHead>Candidate</TableHead><TableHead>Role</TableHead><TableHead>Applied</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
-                    <TableBody>
-                      {filteredApplications.map((app) => (
-                        <TableRow key={app.id}>
-                          <TableCell><div className="font-semibold text-foreground">{app.candidate?.fullName || "Candidate"}</div><div className="text-xs text-muted-foreground">{app.candidate?.email || "-"}</div></TableCell>
-                          <TableCell><div className="font-medium text-foreground">{app.job?.title || "Job"}</div><div className="text-xs text-muted-foreground">{app.job?.company || "Company"}</div></TableCell>
-                          <TableCell className="text-sm text-muted-foreground">{new Date(app.appliedAt).toLocaleDateString()}</TableCell>
-                          <TableCell>
-                            <select value={app.applicationStatus} onChange={(e) => updateApplicationStatus(app.id, e.target.value)} className="h-9 px-2 rounded-md border border-input bg-background text-sm capitalize">
-                              <option value="submitted">Submitted</option><option value="shortlisted">Shortlisted</option><option value="rejected">Rejected</option><option value="accepted">Accepted</option>
-                            </select>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <div className="inline-flex gap-2">
-                              <Button size="icon" variant="ghost" onClick={() => openResume(app.resumeUrl)} title="View Resume"><FileText className="w-4 h-4 text-primary" /></Button>
-                              {app.candidate?.profileId && (
-                                <Button size="icon" variant="ghost" asChild title="View Profile">
-                                  <Link to={`/profile/${app.candidate.profileId}?from=admin&tab=applications&jobId=${app.job?.id || ""}`}>
-                                    <ExternalLink className="w-4 h-4" />
-                                  </Link>
-                                </Button>
+                {appViewMode === "table" ? (
+                  <div className="relative overflow-x-auto">
+                    <Table>
+                      <TableHeader><TableRow><TableHead>Candidate</TableHead><TableHead>Role</TableHead><TableHead>Applied</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
+                      <TableBody>
+                        {filteredApplications.map((app) => (
+                          <TableRow key={app.id}>
+                            <TableCell><div className="font-semibold text-foreground">{app.candidate?.fullName || "Candidate"}</div><div className="text-xs text-muted-foreground">{app.candidate?.email || "-"}</div></TableCell>
+                            <TableCell><div className="font-medium text-foreground">{app.job?.title || "Job"}</div><div className="text-xs text-muted-foreground">{app.job?.company || "Company"}</div></TableCell>
+                            <TableCell className="text-sm text-muted-foreground">{new Date(app.appliedAt).toLocaleDateString()}</TableCell>
+                            <TableCell>
+                              <select value={app.applicationStatus} onChange={(e) => updateApplicationStatus(app.id, e.target.value)} className="h-9 px-2 rounded-md border border-input bg-background text-sm capitalize">
+                                <option value="submitted">Submitted</option><option value="shortlisted">Shortlisted</option><option value="rejected">Rejected</option><option value="accepted">Accepted</option>
+                              </select>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div className="inline-flex gap-2">
+                                <Button size="icon" variant="ghost" onClick={() => openResume(app.resumeUrl)} title="View Resume"><FileText className="w-4 h-4 text-primary" /></Button>
+                                {app.candidate?.profileId && (
+                                  <Button size="icon" variant="ghost" asChild title="View Profile">
+                                    <Link to={`/profile/${app.candidate.profileId}?from=admin&tab=applications&jobId=${app.job?.id || ""}`}>
+                                      <ExternalLink className="w-4 h-4" />
+                                    </Link>
+                                  </Button>
+                                )}
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                        {filteredApplications.length === 0 && <TableRow><TableCell colSpan={5} className="text-center py-12 text-muted-foreground">No applications found.</TableCell></TableRow>}
+                      </TableBody>
+                    </Table>
+                  </div>
+                ) : (
+                  <div className="p-6 overflow-x-auto">
+                    <div className="grid md:grid-cols-4 gap-6 min-w-[950px] items-start">
+                      {PIPELINE_COLUMNS.map((col) => {
+                        const colApps = filteredApplications.filter(a => a.applicationStatus === col.id || (col.id === "accepted" && a.applicationStatus === "accepted"));
+                        return (
+                          <div
+                            key={col.id}
+                            onDragOver={(e) => e.preventDefault()}
+                            onDrop={(e) => {
+                              e.preventDefault();
+                              const id = e.dataTransfer.getData("text/plain");
+                              if (id) void updateApplicationStatus(id, col.id);
+                            }}
+                            className="bg-white/[0.01] border border-white/5 rounded-2xl p-4 min-h-[480px] flex flex-col gap-4 transition-colors hover:bg-white/[0.015] text-left"
+                          >
+                            {/* Column Header */}
+                            <div className="flex items-center justify-between pb-2 border-b border-white/5 mb-1 shrink-0">
+                              <div className="flex items-center gap-2">
+                                <span className={`w-2.5 h-2.5 rounded-full ${col.dotColor}`} />
+                                <h4 className="font-semibold text-sm text-foreground capitalize leading-none">{col.label}</h4>
+                              </div>
+                              <Badge variant="outline" className="text-[10px] bg-white/5 border-white/10 font-bold font-poppins">
+                                {colApps.length}
+                              </Badge>
+                            </div>
+
+                            {/* Column Stack */}
+                            <div className="flex-1 flex flex-col gap-3 overflow-y-auto max-h-[500px] pr-1">
+                              {colApps.map((app) => (
+                                <div
+                                  key={app.id}
+                                  draggable
+                                  onDragStart={(e) => {
+                                    e.dataTransfer.setData("text/plain", app.id);
+                                  }}
+                                  className="p-4 bg-card hover:bg-card/85 border border-white/5 hover:border-primary/30 rounded-xl shadow-sm cursor-grab active:cursor-grabbing transition-all duration-200 group text-left relative overflow-hidden shrink-0"
+                                >
+                                  {/* Top accent line */}
+                                  <div className={`absolute top-0 left-0 right-0 h-[2px] ${col.dotColor}`} />
+
+                                  <h5 className="font-bold text-sm text-foreground group-hover:text-primary transition-colors line-clamp-1 mt-1">
+                                    {app.candidate?.fullName || "Candidate"}
+                                  </h5>
+                                  <p className="text-[10px] text-muted-foreground font-poppins line-clamp-1">{app.candidate?.email}</p>
+
+                                  <div className="mt-3 space-y-0.5">
+                                    <p className="text-[10px] text-foreground font-semibold line-clamp-1">{app.job?.title}</p>
+                                    <p className="text-[9px] text-muted-foreground font-poppins line-clamp-1">{app.job?.company}</p>
+                                  </div>
+
+                                  <div className="flex items-center justify-between mt-4 pt-3 border-t border-white/5">
+                                    <span className="text-[9px] text-muted-foreground font-poppins">
+                                      {new Date(app.appliedAt).toLocaleDateString()}
+                                    </span>
+                                    <div className="flex items-center gap-1">
+                                      <Button
+                                        size="icon"
+                                        variant="ghost"
+                                        className="w-7 h-7 hover:bg-white/5 rounded-lg shrink-0"
+                                        onClick={() => openResume(app.resumeUrl)}
+                                        title="View Resume"
+                                      >
+                                        <FileText className="w-3.5 h-3.5 text-primary" />
+                                      </Button>
+                                      {app.candidate?.profileId && (
+                                        <Button
+                                          size="icon"
+                                          variant="ghost"
+                                          className="w-7 h-7 hover:bg-white/5 rounded-lg shrink-0"
+                                          asChild
+                                          title="View Profile"
+                                        >
+                                          <Link to={`/profile/${app.candidate.profileId}?from=admin&tab=applications&jobId=${app.job?.id || ""}`}>
+                                            <ExternalLink className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground" />
+                                          </Link>
+                                        </Button>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                              {colApps.length === 0 && (
+                                <div className="flex-1 flex items-center justify-center border border-dashed border-white/5 rounded-xl py-12 text-center text-xs text-muted-foreground font-poppins">
+                                  No candidates
+                                </div>
                               )}
                             </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                      {filteredApplications.length === 0 && <TableRow><TableCell colSpan={5} className="text-center py-12 text-muted-foreground">No applications found.</TableCell></TableRow>}
-                    </TableBody>
-                  </Table>
-                </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}
