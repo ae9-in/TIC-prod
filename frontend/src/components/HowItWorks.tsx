@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { UserPlus, FileText, Handshake } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useMotionValue, useMotionTemplate } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
@@ -24,11 +24,31 @@ const steps = [
 
 const HowItWorks = () => {
   const [activeStep, setActiveStep] = useState(0);
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    const { clientX, clientY, currentTarget } = e;
+    const { left, top } = currentTarget.getBoundingClientRect();
+    mouseX.set(clientX - left);
+    mouseY.set(clientY - top);
+  };
 
   return (
-    <section className="relative w-full py-20 overflow-hidden bg-background">
+    <section
+      onMouseMove={handleMouseMove}
+      className="relative w-full py-20 overflow-hidden bg-background group/section"
+    >
       {/* Grid Pattern Background */}
       <div className="absolute inset-0 bg-[radial-gradient(rgba(14,165,233,0.03)_1px,transparent_1px)] [background-size:32px_32px] pointer-events-none" />
+
+      {/* Interactive spotlight cursor halo */}
+      <motion.div
+        className="absolute inset-0 z-0 pointer-events-none opacity-0 group-hover/section:opacity-100 transition-opacity duration-500"
+        style={{
+          background: useMotionTemplate`radial-gradient(450px circle at ${mouseX}px ${mouseY}px, rgba(14,165,233,0.06), transparent 80%)`,
+        }}
+      />
 
       {/* Decorative Animated Blur Accents & Particles */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
@@ -73,6 +93,37 @@ const HowItWorks = () => {
           }}
           className="absolute bottom-10 right-1/4 w-[250px] h-[250px] rounded-full bg-accent/5 blur-[90px] opacity-50"
         />
+
+        {/* Floating Wireframe Rings and Shapes */}
+        <motion.div
+          animate={{
+            y: [15, -15, 15],
+            rotate: [360, 0],
+          }}
+          transition={{
+            duration: 22,
+            repeat: Infinity,
+            ease: "linear",
+          }}
+          className="absolute top-[25%] right-[6%] w-12 h-12 text-accent/10 border border-accent/20 rounded-full flex items-center justify-center pointer-events-none"
+        >
+          <div className="w-8 h-8 rounded-full border border-dashed border-accent/10" />
+        </motion.div>
+
+        <motion.div
+          animate={{
+            y: [-20, 20, -20],
+            rotate: [0, 360],
+          }}
+          transition={{
+            duration: 18,
+            repeat: Infinity,
+            ease: "linear",
+          }}
+          className="absolute bottom-[25%] left-[6%] w-14 h-14 text-primary/10 border border-dashed border-primary/20 rounded-lg flex items-center justify-center pointer-events-none"
+        >
+          <div className="w-6 h-6 rounded-full border border-primary/10 rotate-45" />
+        </motion.div>
 
         {/* Floating Particles */}
         {[
