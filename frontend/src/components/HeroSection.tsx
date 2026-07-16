@@ -7,15 +7,28 @@ import heroImage from "@/assets/hero-image.jpg";
 const HeroSection = () => {
   return (
     <section className="relative w-full h-full min-h-screen flex items-center justify-center overflow-hidden py-24">
-      {/* Background Image with optimized dark overlay gradient for readability */}
+      {/* Background Video with optimized dark overlay gradient for readability */}
       <div className="absolute inset-0 z-0">
-        <img
-          src={heroImage}
-          alt="Diverse interns collaborating"
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
           className="w-full h-full object-cover object-center"
-        />
+        >
+          <source
+            src="https://assets.mixkit.co/videos/preview/mixkit-business-people-working-together-in-an-office-4334-large.mp4"
+            type="video/mp4"
+          />
+          {/* Fallback image */}
+          <img
+            src={heroImage}
+            alt="Diverse interns collaborating"
+            className="w-full h-full object-cover object-center"
+          />
+        </video>
         {/* Soft, rich dark gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/50 to-black/80 z-10" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/85 via-black/40 to-black/85 z-10" />
       </div>
 
       {/* Decorative Blur Accents */}
