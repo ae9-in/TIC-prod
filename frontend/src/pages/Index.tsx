@@ -24,22 +24,22 @@ const Index = () => {
   if (loading) return null;
 
   return (
-    <div className="h-screen w-full overflow-y-auto snap-y snap-mandatory scroll-smooth bg-background">
+    <div className="w-full min-h-screen bg-background text-foreground scroll-smooth">
       <Navbar />
 
-      {/* Slide 1: Hero Section */}
-      <div className="w-full h-screen snap-start shrink-0 relative">
+      {/* Section 1: Hero Section */}
+      <div className="w-full min-h-screen relative flex items-center justify-center">
         <HeroSection />
       </div>
 
-      {/* Slide 2: Platform Stats & Impact */}
-      <div className="w-full h-screen snap-start shrink-0 relative">
+      {/* Section 2: Platform Stats & Impact */}
+      <div className="w-full min-h-screen relative flex items-center justify-center">
         <StatsSection />
       </div>
 
-      {/* Slide 3: How It Works Onboarding & Footer */}
-      <div className="w-full h-screen snap-start shrink-0 flex flex-col justify-between bg-gradient-to-b from-secondary/30 to-background overflow-hidden">
-        <div className="flex-1 flex items-center justify-center">
+      {/* Section 3: How It Works Onboarding & Footer */}
+      <div className="w-full min-h-screen flex flex-col justify-between bg-gradient-to-b from-secondary/30 to-background">
+        <div className="flex-1 flex items-center justify-center py-10">
           <HowItWorks />
         </div>
         <Footer />
