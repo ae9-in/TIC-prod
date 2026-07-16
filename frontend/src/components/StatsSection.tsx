@@ -1,11 +1,42 @@
 import { Users, Building2, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 
 const stats = [
   { icon: Users, label: "Interns Registered", value: "2,400+" },
   { icon: Building2, label: "Partner Companies", value: "150+" },
   { icon: Sparkles, label: "Placements Made", value: "800+" },
 ];
+
+const chartData = [
+  { month: "Jan", Placements: 120, Interns: 400 },
+  { month: "Feb", Placements: 210, Interns: 750 },
+  { month: "Mar", Placements: 340, Interns: 1100 },
+  { month: "Apr", Placements: 480, Interns: 1550 },
+  { month: "May", Placements: 620, Interns: 1980 },
+  { month: "Jun", Placements: 800, Interns: 2400 },
+];
+
+const CustomTooltip = ({ active, payload }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-background/95 border border-white/10 backdrop-blur-md p-4 rounded-xl shadow-lg">
+        <p className="font-sora font-semibold text-sm text-foreground mb-1">{payload[0].payload.month}</p>
+        <p className="font-poppins text-xs text-primary flex items-center gap-1.5 font-semibold">
+          <span className="w-2 h-2 rounded-full bg-primary" />
+          Placements: <span className="font-bold">{payload[0].value}</span>
+        </p>
+        {payload[1] && (
+          <p className="font-poppins text-xs text-accent flex items-center gap-1.5 mt-0.5 font-semibold">
+            <span className="w-2 h-2 rounded-full bg-accent" />
+            Interns: <span className="font-bold">{payload[1].value}</span>
+          </p>
+        )}
+      </div>
+    );
+  }
+  return null;
+};
 
 const StatsSection = () => {
   return (
@@ -126,6 +157,56 @@ const StatsSection = () => {
           ))}
         </div>
 
+        {/* Dynamic Analytics Chart */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: false, amount: 0.2 }}
+          transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+          className="mt-20 w-full max-w-4xl mx-auto p-6 md:p-8 rounded-3xl bg-white/[0.02] border border-white/5 backdrop-blur-md shadow-card text-left"
+        >
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+            <div>
+              <h4 className="font-sora font-extrabold text-xl md:text-2xl text-foreground">
+                Placement & Growth Trends
+              </h4>
+              <p className="text-muted-foreground text-sm font-poppins mt-1">
+                Real-time tracking of successful internship matches and user registrations.
+              </p>
+            </div>
+            <div className="flex items-center gap-4">
+              <span className="flex items-center gap-1.5 text-xs font-semibold font-poppins text-primary">
+                <span className="w-2.5 h-2.5 rounded-full bg-primary" /> Placements
+              </span>
+              <span className="flex items-center gap-1.5 text-xs font-semibold font-poppins text-accent">
+                <span className="w-2.5 h-2.5 rounded-full bg-accent" /> Interns
+              </span>
+            </div>
+          </div>
+
+          <div className="w-full h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="colorPlacements" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#14b8a6" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#14b8a6" stopOpacity={0}/>
+                  </linearGradient>
+                  <linearGradient id="colorInterns" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.2}/>
+                    <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <XAxis dataKey="month" stroke="rgba(255,255,255,0.2)" fontSize={11} fontFamily="var(--font-body)" />
+                <YAxis stroke="rgba(255,255,255,0.2)" fontSize={11} fontFamily="var(--font-body)" />
+                <Tooltip content={<CustomTooltip />} />
+                <Area type="monotone" dataKey="Placements" stroke="#14b8a6" strokeWidth={3} fillOpacity={1} fill="url(#colorPlacements)" />
+                <Area type="monotone" dataKey="Interns" stroke="#0ea5e9" strokeWidth={3} fillOpacity={1} fill="url(#colorInterns)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </motion.div>
+
         {/* Dynamic Highlights / Trust Checklist elements */}
         <motion.div
           initial={{ opacity: 0, y: 15 }}
@@ -156,3 +237,4 @@ const StatsSection = () => {
 };
 
 export default StatsSection;
+

@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { UserPlus, FileText, Handshake } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
@@ -22,6 +23,8 @@ const steps = [
 ];
 
 const HowItWorks = () => {
+  const [activeStep, setActiveStep] = useState(0);
+
   return (
     <section className="relative w-full py-20 overflow-hidden bg-background">
       {/* Grid Pattern Background */}
@@ -115,54 +118,226 @@ const HowItWorks = () => {
           </p>
         </motion.div>
 
-        {/* Desktop timeline connector and cards */}
-        <div className="relative">
-          {/* Horizontal connecting line with animated light pulse */}
-          <div className="absolute top-[60px] left-[15%] right-[15%] h-[2px] hidden md:block z-0 overflow-hidden rounded-full">
-            <div className="w-full h-full bg-gradient-to-r from-primary/20 via-accent/30 to-primary/20 relative">
-              <motion.div
-                initial={{ left: "-20%" }}
-                animate={{ left: "120%" }}
-                transition={{
-                  duration: 3,
-                  repeat: Infinity,
-                  ease: "linear"
-                }}
-                className="absolute top-0 bottom-0 w-[100px] bg-gradient-to-r from-transparent via-primary/80 to-transparent"
-              />
-            </div>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8 relative z-10">
+        {/* Responsive Grid Layout */}
+        <div className="grid md:grid-cols-5 gap-12 items-center">
+          {/* Left Column: Steps List (Span 2) */}
+          <div className="md:col-span-2 col-span-5 space-y-5">
             {steps.map((step, i) => (
               <motion.div
                 key={step.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: false, amount: 0.2 }}
-                transition={{ duration: 0.8, delay: i * 0.15, ease: [0.16, 1, 0.3, 1] }}
-                whileHover={{ y: -8, scale: 1.02 }}
-                className="relative bg-white/[0.02] border border-white/5 hover:border-primary/20 backdrop-blur-md rounded-2xl p-8 shadow-card hover:shadow-primary/5 transition-all duration-300 text-center overflow-hidden group"
+                transition={{ duration: 0.6, delay: i * 0.1, ease: "easeOut" }}
+                onMouseEnter={() => setActiveStep(i)}
+                onClick={() => setActiveStep(i)}
+                className={`relative p-6 rounded-2xl border text-left cursor-pointer transition-all duration-300 select-none ${
+                  activeStep === i
+                    ? "bg-white/[0.04] border-primary shadow-lg shadow-primary/5"
+                    : "bg-white/[0.01] border-white/5 hover:border-white/10 hover:bg-white/[0.02]"
+                }`}
               >
-                {/* Background Number Accent */}
-                <div className="absolute top-4 right-6 font-sora text-5xl font-extrabold text-white/5 select-none group-hover:text-primary/10 group-hover:scale-110 transition-all duration-500">
-                  0{i + 1}
+                {/* Connector line for active state */}
+                {activeStep === i && (
+                  <motion.div
+                    layoutId="activeIndicator"
+                    className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-gradient-hero rounded-r-md"
+                  />
+                )}
+                
+                <div className="flex items-center gap-4 mb-3">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 ${
+                    activeStep === i
+                      ? "bg-gradient-hero text-white shadow-md shadow-primary/20"
+                      : "bg-white/5 text-muted-foreground"
+                  }`}>
+                    <step.icon className="w-5 h-5" />
+                  </div>
+                  <h3 className={`font-sora text-lg font-bold transition-colors duration-300 ${
+                    activeStep === i ? "text-primary" : "text-foreground"
+                  }`}>
+                    {step.title}
+                  </h3>
                 </div>
-
-                {/* Icon Container with animated background glow */}
-                <div className="w-14 h-14 rounded-xl bg-gradient-hero flex items-center justify-center mx-auto mb-6 shadow-md shadow-primary/20 relative z-10 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
-                  <step.icon className="w-6 h-6 text-primary-foreground" />
-                </div>
-
-                <h3 className="font-sora text-xl font-bold text-foreground mb-3 group-hover:text-primary transition-colors duration-300">
-                  {step.title}
-                </h3>
-                <p className="text-muted-foreground text-sm font-poppins leading-relaxed">
+                <p className="text-muted-foreground text-sm font-poppins leading-relaxed pl-14">
                   {step.description}
                 </p>
               </motion.div>
             ))}
           </div>
+
+          {/* Right Column: Dynamic Preview Window (Span 3) */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: false, amount: 0.2 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+            className="md:col-span-3 col-span-5 w-full"
+          >
+            <div className="bg-[#030712]/50 border border-white/5 rounded-3xl w-full h-[380px] p-8 backdrop-blur-md shadow-card relative flex flex-col justify-between overflow-hidden">
+              {/* Browser Window Header Dots */}
+              <div className="flex gap-1.5 absolute top-5 left-5 z-20">
+                <div className="w-2.5 h-2.5 rounded-full bg-[#ff5f56]" />
+                <div className="w-2.5 h-2.5 rounded-full bg-[#ffbd2e]" />
+                <div className="w-2.5 h-2.5 rounded-full bg-[#27c93f]" />
+              </div>
+
+              {/* Dynamic Content */}
+              <div className="w-full h-full pt-6 flex flex-col justify-center">
+                <AnimatePresence mode="wait">
+                  {activeStep === 0 && (
+                    <motion.div
+                      key="step-0"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.3 }}
+                      className="flex flex-col h-full justify-between pt-4 text-left"
+                    >
+                      <div className="flex items-center justify-between border-b border-white/5 pb-4 mb-2">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-xs">RS</div>
+                          <div>
+                            <p className="text-sm font-bold text-foreground leading-none">Rahul Sharma</p>
+                            <p className="text-[10px] text-muted-foreground mt-0.5">Frontend Developer</p>
+                          </div>
+                        </div>
+                        <span className="text-[10px] bg-primary/10 text-primary px-2.5 py-0.5 rounded-full font-semibold">Active</span>
+                      </div>
+                      
+                      <div className="space-y-4">
+                        <div>
+                          <div className="flex justify-between text-xs text-muted-foreground mb-1.5 font-poppins">
+                            <span>Profile Completion</span>
+                            <span className="font-semibold text-primary">100%</span>
+                          </div>
+                          <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
+                            <motion.div
+                              initial={{ width: 0 }}
+                              animate={{ width: "100%" }}
+                              transition={{ duration: 1, ease: "easeOut" }}
+                              className="h-full bg-gradient-hero"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Expertise Tags</p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {["React", "TypeScript", "Tailwind CSS", "Framer Motion", "Vite"].map((tag, idx) => (
+                              <motion.span
+                                key={tag}
+                                initial={{ opacity: 0, scale: 0.8 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                transition={{ delay: idx * 0.08, duration: 0.25 }}
+                                className="text-[10px] bg-white/5 border border-white/10 px-2.5 py-1 rounded-md text-foreground"
+                              >
+                                {tag}
+                              </motion.span>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="border-t border-white/5 pt-4 mt-2">
+                        <span className="text-xs text-muted-foreground font-poppins">Resume Uploaded: <span className="text-primary font-semibold font-poppins">rahul_resume.pdf ✓</span></span>
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {activeStep === 1 && (
+                    <motion.div
+                      key="step-1"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.3 }}
+                      className="flex flex-col h-full justify-between pt-4 relative overflow-hidden text-left"
+                    >
+                      <div>
+                        <div className="flex justify-between items-center mb-6">
+                          <p className="text-sm font-bold text-foreground">Smart Match Results</p>
+                          <span className="flex h-2.5 w-2.5 relative">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-accent"></span>
+                          </span>
+                        </div>
+
+                        <div className="space-y-3">
+                          {[
+                            { company: "Vercel", role: "Frontend Intern", match: "98%", border: "border-primary/20" },
+                            { company: "Stripe", role: "Software Engineer Intern", match: "95%", border: "border-white/5" }
+                          ].map((job, idx) => (
+                            <motion.div
+                              key={job.company}
+                              initial={{ x: 30, opacity: 0 }}
+                              animate={{ x: 0, opacity: 1 }}
+                              transition={{ delay: idx * 0.12 }}
+                              className={`p-4 rounded-xl bg-white/5 border ${job.border} flex items-center justify-between`}
+                            >
+                              <div>
+                                <p className="text-xs font-bold text-foreground">{job.role}</p>
+                                <p className="text-[10px] text-muted-foreground mt-0.5">{job.company}</p>
+                              </div>
+                              <div className="text-right">
+                                <span className="text-[10px] font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-full">{job.match} Match</span>
+                              </div>
+                            </motion.div>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      {/* Scanning radar line */}
+                      <motion.div
+                        animate={{ top: ['15%', '85%', '15%'] }}
+                        transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
+                        className="absolute inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-accent to-transparent opacity-50 pointer-events-none"
+                      />
+
+                      <div className="border-t border-white/5 pt-4 mt-2">
+                        <span className="text-xs text-muted-foreground font-poppins">Matching Engine status: <span className="text-accent font-semibold font-poppins">Scanning Roles...</span></span>
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {activeStep === 2 && (
+                    <motion.div
+                      key="step-2"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.3 }}
+                      className="flex flex-col h-full justify-between items-center text-center pt-6 px-4"
+                    >
+                      <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mb-3 shadow-inner border border-primary/20">
+                        <span className="text-3xl animate-bounce" style={{ animationDuration: '3s' }}>🎉</span>
+                      </div>
+                      
+                      <div>
+                        <h5 className="text-base font-bold text-foreground">Offer Letter Received!</h5>
+                        <p className="text-xs text-muted-foreground mt-1.5 max-w-[280px] leading-relaxed font-poppins">
+                          Congratulations! Vercel has offered you the role of <strong>Frontend Intern</strong> starting next month.
+                        </p>
+                      </div>
+
+                      <div className="w-full grid grid-cols-2 gap-3 mt-6">
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          className="py-2.5 bg-gradient-hero text-white text-xs font-bold rounded-xl shadow-md shadow-primary/20 hover:brightness-110 transition-all duration-300"
+                        >
+                          Accept Offer
+                        </motion.button>
+                        <button className="py-2.5 bg-white/5 hover:bg-white/10 text-muted-foreground hover:text-foreground text-xs font-semibold rounded-xl border border-white/5 transition-all duration-300">
+                          Decline
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </div>
+          </motion.div>
         </div>
 
         {/* CTA Link to Jobs */}
