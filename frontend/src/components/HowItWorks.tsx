@@ -21,19 +21,20 @@ const steps = [
 
 const HowItWorks = () => {
   return (
-    <section className="py-20 bg-secondary/50">
-      <div className="container mx-auto px-4">
+    <div className="w-full py-8">
+      <div className="container mx-auto px-4 max-w-5xl">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 25 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center mb-14"
+          viewport={{ once: false, amount: 0.3 }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-12"
         >
-          <h2 className="font-display text-3xl lg:text-4xl font-bold text-foreground mb-3">
-            How It Works
+          <h2 className="font-sora text-3xl md:text-5xl font-extrabold text-foreground mb-4 leading-tight">
+            How It <span className="text-gradient">Works</span>
           </h2>
-          <p className="text-muted-foreground text-lg max-w-md mx-auto">
-            Three simple steps to your next internship
+          <p className="text-muted-foreground text-lg max-w-md mx-auto font-poppins">
+            Three simple steps to your next career-defining internship
           </p>
         </motion.div>
 
@@ -41,25 +42,26 @@ const HowItWorks = () => {
           {steps.map((step, i) => (
             <motion.div
               key={step.title}
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.15 }}
-              className="relative bg-card rounded-2xl p-8 shadow-card border border-border text-center"
+              viewport={{ once: false, amount: 0.3 }}
+              transition={{ duration: 0.6, delay: i * 0.15, ease: "easeOut" }}
+              whileHover={{ y: -6, transition: { duration: 0.2 } }}
+              className="relative bg-card rounded-2xl p-8 shadow-card border border-border text-center overflow-hidden"
             >
-              <div className="w-14 h-14 rounded-xl bg-gradient-hero flex items-center justify-center mx-auto mb-5">
+              <div className="w-14 h-14 rounded-xl bg-gradient-hero flex items-center justify-center mx-auto mb-6 shadow-sm">
                 <step.icon className="w-7 h-7 text-primary-foreground" />
               </div>
-              <div className="absolute top-6 right-6 font-display text-4xl font-bold text-muted/80">
+              <div className="absolute top-4 right-6 font-sora text-4xl font-extrabold text-muted/50 select-none">
                 {i + 1}
               </div>
-              <h3 className="font-display text-xl font-semibold text-foreground mb-2">{step.title}</h3>
-              <p className="text-muted-foreground">{step.description}</p>
+              <h3 className="font-sora text-xl font-bold text-foreground mb-3">{step.title}</h3>
+              <p className="text-muted-foreground text-sm font-poppins leading-relaxed">{step.description}</p>
             </motion.div>
           ))}
         </div>
       </div>
-    </section>
+    </div>
   );
 };
 

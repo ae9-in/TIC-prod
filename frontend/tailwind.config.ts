@@ -16,6 +16,8 @@ export default {
       fontFamily: {
         display: ["Space Grotesk", "sans-serif"],
         body: ["DM Sans", "sans-serif"],
+        sora: ["Sora", "sans-serif"],
+        poppins: ["Poppins", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -90,6 +92,7 @@ export default {
         "accordion-up": "accordion-up 0.2s ease-out",
         "fade-in-up": "fade-in-up 0.6s ease-out forwards",
         "fade-in": "fade-in 0.4s ease-out forwards",
+        "spin-slow": "spin 25s linear infinite",
       },
     },
   },
